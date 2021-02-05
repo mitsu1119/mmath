@@ -1,11 +1,11 @@
-CC = g++
-CXXFLAGS = -c -Wall -Wextra -O2 -std=c++17 -I ../include
+CC = nvcc
+CXXFLAGS = -c --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
 BIN = ../bin
 BINNAME = bin
 DIST = ../dist
 
-SRCS = test.cpp 
-OBJS = $(DIST)/$(SRCS:.cpp=.o)
+SRCS = test.cu
+OBJS = $(DIST)/$(SRCS:.cu=.o)
 
 .PHONY: all
 all: $(SRCS) $(BIN)/$(BINNAME)
@@ -13,5 +13,5 @@ all: $(SRCS) $(BIN)/$(BINNAME)
 $(BIN)/$(BINNAME): $(OBJS)
 	$(CC) $(OBJS) -o $(BIN)/$(BINNAME)
 
-$(DIST)/%.o: %.cpp $(DIST)
-	$(CC) $(CXXFLAGS) $*.cpp -o $(DIST)/$*.o
+$(DIST)/%.o: %.cu $(DIST)
+	$(CC) $(CXXFLAGS) $*.cu -o $(DIST)/$*.o
