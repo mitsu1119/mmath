@@ -11,12 +11,9 @@ int main() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	Digits d(1ul << 10, 50);
+	Int a("1234");
 
 	cudaEventRecord(start, 0);
-
-	d.to_zero();
-	d.print();
 
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);

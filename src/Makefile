@@ -4,8 +4,8 @@ BIN = ../bin
 BINNAME = bin
 DIST = ../dist
 
-SRCS = test.cu
-OBJS = $(DIST)/$(SRCS:.cu=.o)
+SRCS = Int.cu test.cu
+OBJS = $(subst .o ,.o $(DIST)/,$(DIST)/$(SRCS:%.cu=%.o))
 
 .PHONY: all
 all: $(SRCS) $(BIN)/$(BINNAME)
