@@ -1,7 +1,7 @@
 #include <iostream>
 #include <time.h>
 #include <unistd.h>
-#include "Int.hpp"
+#include "Int.cuh"
 
 using namespace mmath;
 int main() {
@@ -11,9 +11,12 @@ int main() {
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	Int a("1234");
+	Int a("123456789");
+	Int b("ab239438902");
+	Int c("aaaaaaaaaa");
 
 	cudaEventRecord(start, 0);
+
 
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);

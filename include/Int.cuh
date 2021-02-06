@@ -1,9 +1,8 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include <string_view>
-#include "Digits.hpp"
-#include "util.hpp"
+#include "Digits.cuh"
+#include "util.cuh"
 
 namespace mmath {
 
@@ -13,9 +12,8 @@ private:
 	static constexpr Sign PLUS = true;
 	static constexpr Sign MINUS = false;
 
-	// log2(digitsの基数)、つまり基数は2の何乗かを示す
-	// 16進数への変換を考えて、LOG_RADIX % 4 = 0 である必要あり
-	static constexpr i32 LOG_RADIX = 20;
+	static constexpr i32 LOG_RADIX = mmath::Digits::LOG_RADIX;
+	static constexpr i32 LOG_16_RADIX = mmath::Digits::LOG_16_RADIX;
 
 	mmath::Digits digits;
 	Sign sign;
@@ -27,7 +25,7 @@ public:
 	Int(const Digits &x);
 
 	// 16進文字列を受け取って数値に変換
-	Int(std::string_view x);
+	Int(const std::string &x);
 };
 
 }

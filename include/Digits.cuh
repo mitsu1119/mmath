@@ -3,20 +3,34 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include "util.hpp"
+#include "util.cuh"
 
 namespace mmath {
 
+// 長さlenの16進文字列を数値にデコードしてresに格納
+__host__ __device__ void small_hex_str_to_i64(const char *st, i32 len, i64 *res);
+
+// 16進数のデコード
+// 長さlenのstをsizeごとに切り分け、各部分文字列を16進数の数値と見て、サイズNのdataに数値として格納
+__global__ void decode_hex_for_digits(const char *st, size_t len, i32 size, i64 *data, size_t N);
+
 class Digits {
 private:
-	// Digits(12345678) => data: {78, 56, 34, 12}
+	// Digits(123456789) => data: {56789, 1234}
 	thrust::device_vector<i64> data;
-	
+
 public:
 	Digits(i64 val = 0);	
 
 	// dataをlenの長さのvalで埋める
 	Digits(size_t len, i64 val);
+
+	// log2(digitsの基数)、つまり基数は2の何乗かを示す
+	// 16進数への変換を考えて、LOG_RADIX % 4 = 0 である必要あり
+	static constexpr i32 LOG_RADIX = 20;
+
+	// 16進数として見たときの各桁の長さ
+	static constexpr i32 LOG_16_RADIX = mmath::Digits::LOG_RADIX >> 2;
 
 	size_t size() const;
 	i64 at(size_t i) const;
@@ -29,7 +43,10 @@ public:
 	void resize(size_t size);
 	void normalize();	// 不必要な上位桁のゼロを削除する
 
-	void print() const;
+	// 文字列を16進数と解釈して格納
+	void from_hex(const char *st, size_t len_st);
+
+	void print(bool hex = false) const;
 };
 
 inline mmath::Digits::Digits(size_t len, i64 val): data(len, val) {
@@ -78,11 +95,6 @@ inline void mmath::Digits::normalize() {
 	}
 
 	if(size() == 0) to_zero();
-}
-
-inline void mmath::Digits::print() const {
-	for(auto i: data) std::cout << i << " ";
-	std::cout << std::endl;
 }
 
 }

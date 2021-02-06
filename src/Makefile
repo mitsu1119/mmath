@@ -1,10 +1,10 @@
 CC = nvcc
-CXXFLAGS = -c --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
+CXXFLAGS = -c -arch=sm_61 --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
 BIN = ../bin
 BINNAME = bin
 DIST = ../dist
 
-SRCS = Int.cu test.cu
+SRCS = test.cu Int.cu Digits.cu
 OBJS = $(subst .o ,.o $(DIST)/,$(DIST)/$(SRCS:%.cu=%.o))
 
 .PHONY: all
