@@ -4,7 +4,7 @@ BIN = ../bin
 BINNAME = bin
 DIST = ../dist
 
-SRCS = test.cu Int.cu Digits.cu
+SRCS = Int.cu Digits.cu ../test/Digits/add.cu # test.cu
 OBJS = $(subst .o ,.o $(DIST)/,$(DIST)/$(SRCS:%.cu=%.o))
 
 .PHONY: all
@@ -15,3 +15,4 @@ $(BIN)/$(BINNAME): $(OBJS)
 
 $(DIST)/%.o: %.cu
 	$(CC) $(CXXFLAGS) $*.cu -o $(DIST)/$*.o
+

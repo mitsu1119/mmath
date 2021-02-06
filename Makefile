@@ -3,6 +3,7 @@ INCLUDE = include
 BIN = ./bin
 BINNAME = bin
 DIST = ./dist
+TEST = ./test
 
 .PHONY: all
 all: $(INCLUDE) $(BIN) $(DIST)
@@ -23,3 +24,6 @@ run:
 clean:
 	rm -rf $(BIN)
 	rm -rf $(DIST)
+
+$(TEST)/%.cu: $(INCLUDE) $(BIN) $(DIST)
+	cd $(SRC) && make ../$(TEST)/$*.cu
