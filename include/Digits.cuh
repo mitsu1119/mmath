@@ -5,6 +5,10 @@
 #include <thrust/copy.h>
 #include "util.cuh"
 
+// add algorithm
+// #define MMATH_DIGITS_ADD_SEQUENTIAL 1
+#define MMATH_DIGITS_ADD_PARALLEL 1
+
 namespace mmath {
 
 // 長さlenの16進文字列を数値にデコードしてresに格納
@@ -14,16 +18,27 @@ __host__ __device__ void small_hex_str_to_i64(const char *st, i32 len, i64 *res)
 // 長さlenのstをsizeごとに切り分け、各部分文字列を16進数の数値と見て、サイズNのdataに数値として格納
 __global__ void decode_hex_for_digits(const char *st, size_t len, i32 size, i64 *data, size_t N);
 
+// Digitsのlook-ahead方式用の和
+// a += b
+__global__ void sum_for_look_ahead(i64 *a, const i64 *b, size_t len, i32 LOG_RADIX, char *ps, char *gs);
+
+// Digitsのlook-ahead方式用の和、dataにcarryを足していく。最後の桁上げはcに格納
+__global__ void sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, char *c);
+
+// Digitsのlook-ahead方式用のcarryの計算
+__global__ void carrys_for_look_ahead(char *ps, char *gs, size_t k, size_t len);
+
 class Digits {
 private:
 	// Digits(123456789) => data: {56789, 1234}
 	thrust::device_vector<i64> data;
 
+	// dataをlenの長さのvalで埋める
+	Digits(size_t len, i64 val);
+
 public:
 	Digits(i64 val = 0);	
 
-	// dataをlenの長さのvalで埋める
-	Digits(size_t len, i64 val);
 
 	// log2(digitsの基数)、つまり基数は2の何乗かを示す
 	// 16進数への変換を考えて、LOG_RADIX % 4 = 0 である必要あり
@@ -37,11 +52,14 @@ public:
 	size_t msd() const;
 
 	void to_zero();		// dataを長さ1のゼロの配列にする
-	void push_msd(i64 num);
-	void push_lsd_zero(size_t n);
+	void push_msd(i64 num, size_t n = 1);
+	void push_lsd(i64 num, size_t n = 1);
 	void pop_msd();
-	void resize(size_t size);
+
 	void normalize();	// 不必要な上位桁のゼロを削除する
+
+	// this += x
+	void add(const mmath::Digits &x);
 
 	// 文字列を16進数と解釈して格納
 	void from_hex(const char *st, size_t len_st);
@@ -72,29 +90,23 @@ inline void mmath::Digits::to_zero() {
 	data = thrust::device_vector<i64>(1, 0);
 }
 
-inline void mmath::Digits::push_msd(i64 num) {
-	data.push_back(num);
+inline void mmath::Digits::push_msd(i64 num, size_t n) {
+	for(size_t i = 0; i < n; i++) data.push_back(num);
 }
 
-inline void mmath::Digits::push_lsd_zero(size_t n) {
-	data.insert(data.begin(), n, 0);
+inline void mmath::Digits::push_lsd(i64 num, size_t n) {
+	data.insert(data.begin(), n, num);
 }
 
 inline void mmath::Digits::pop_msd() {
 	data.pop_back();
 }
 
-inline void mmath::Digits::resize(size_t size) {
-	data.resize(size, 0);
-}
-
 inline void mmath::Digits::normalize() {
-	while(size() > 0) {
+	while(size() > 1) {
 		if(msd() == 0) pop_msd();
 		else break;
 	}
-
-	if(size() == 0) to_zero();
 }
 
 }

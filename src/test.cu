@@ -5,6 +5,10 @@
 
 using namespace mmath;
 int main() {
+
+	Int c("fffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
+	Int d("abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
+
 	// 計測用(start)
 	float elapsed;
 	cudaEvent_t start, stop;
@@ -12,8 +16,7 @@ int main() {
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 
-	Int c("deadbeefabcdef1234567890");
-	std::cout << c << std::endl;
+	c.add(d);
 
 	// 計測用(end)
 	cudaEventRecord(stop, 0);
@@ -22,6 +25,8 @@ int main() {
 	std::cout << "elapsed: " << elapsed << " [ms]" << std::endl;
 	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
+
+	std::cout << c << std::endl;
 
 	return 0;
 }

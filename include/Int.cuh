@@ -31,11 +31,17 @@ public:
 
 	mmath::Int abs() const;
 
+	void add(const mmath::Int &x);
+
 	// operators
 	friend std::ostream &operator<<(std::ostream &os, const mmath::Int &x) {
 		x.print_hex(os);
 		return os;
 	}
 };
+
+inline void mmath::Int::add(const mmath::Int &x) {
+	digits.add(x.digits);
+}
 
 }
