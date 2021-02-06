@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include <string>
+#include <iomanip>
 #include "Digits.cuh"
 #include "util.cuh"
 
@@ -18,6 +18,8 @@ private:
 	mmath::Digits digits;
 	Sign sign;
 
+	void print_hex(std::ostream &os) const;
+
 public:
 	Int();
 	Int(const mmath::Int &) = default;
@@ -26,6 +28,14 @@ public:
 
 	// 16進文字列を受け取って数値に変換
 	Int(const std::string &x);
+
+	mmath::Int abs() const;
+
+	// operators
+	friend std::ostream &operator<<(std::ostream &os, const mmath::Int &x) {
+		x.print_hex(os);
+		return os;
+	}
 };
 
 }

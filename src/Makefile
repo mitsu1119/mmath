@@ -1,5 +1,5 @@
 CC = nvcc
-CXXFLAGS = -c -arch=sm_61 --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
+CXXFLAGS = -c --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
 BIN = ../bin
 BINNAME = bin
 DIST = ../dist
@@ -13,5 +13,5 @@ all: $(SRCS) $(BIN)/$(BINNAME)
 $(BIN)/$(BINNAME): $(OBJS)
 	$(CC) $(OBJS) -o $(BIN)/$(BINNAME)
 
-$(DIST)/%.o: %.cu $(DIST)
+$(DIST)/%.o: %.cu
 	$(CC) $(CXXFLAGS) $*.cu -o $(DIST)/$*.o

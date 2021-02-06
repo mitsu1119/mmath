@@ -45,9 +45,9 @@ void mmath::Digits::from_hex(const char *st, size_t len_st) {
 		data.resize(len_st / mmath::Digits::LOG_16_RADIX + 1);
 	}
 
-	i32 threads_per_block = 1 << 9;
+	i32 threads_per_block = 512;
 	i32 blocks_per_grid;
-	if(len_st & ((1 << 9) - 1) == 0) blocks_per_grid = len_st >> 9;
+	if(len_st & (512 - 1) == 0) blocks_per_grid = len_st >> 9;
 	else blocks_per_grid = (len_st >> 9) + 1;
 
 	char *d_st;
@@ -55,5 +55,6 @@ void mmath::Digits::from_hex(const char *st, size_t len_st) {
 	cudaMemcpy(d_st, st,len_st, cudaMemcpyHostToDevice);
 
 	mmath::decode_hex_for_digits<<<blocks_per_grid, threads_per_block>>>(d_st, len_st, mmath::Digits::LOG_16_RADIX, thrust::raw_pointer_cast(data.data()), data.size());
+
 	cudaFree(d_st);
 }
