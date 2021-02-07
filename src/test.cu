@@ -16,7 +16,7 @@ int main() {
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 
-	c.add(d);
+	c.sub(d);
 
 	// 計測用(end)
 	cudaEventRecord(stop, 0);

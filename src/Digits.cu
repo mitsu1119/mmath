@@ -57,12 +57,18 @@ void mmath::carrys_for_look_ahead(char *ps, char *gs, size_t k, size_t len) {
 }
 
 __global__
-void mmath::sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, char *c) {
+void mmath::sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, i32 LOG_RADIX, char *c) {
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 	if(i < len) {
-		data[i] += carrys[i - 1];
+		data[i] = (data[i] + carrys[i - 1]) & ((1 << LOG_RADIX) - 1);
 	}
 	if(i == len - 1) *c = carrys[i];
+}
+
+__global__
+void mmath::not_for_complement(i64 *data, size_t len, i32 LOG_RADIX) {
+	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
+	if(i < len) data[i] = (~data[i]) & ((1 << LOG_RADIX) - 1);
 }
 
 void mmath::Digits::print(bool hex) const {
@@ -122,10 +128,12 @@ void mmath::Digits::add(const mmath::Digits &x) {
 // device
 // carry look-ahead
 #if MMATH_DIGITS_ADD_PARALLEL
-void mmath::Digits::add(const mmath::Digits &x) {
+void mmath::Digits::add(const mmath::Digits &xx) {
 	// if(x == 0) return;
 
+	mmath::Digits x(xx);
 	if(size() < x.size()) data.resize(x.size());
+	x.data.resize(size());
 
 	size_t len = size();
 	char *ps;
@@ -151,7 +159,7 @@ void mmath::Digits::add(const mmath::Digits &x) {
 	char *d_c;
 	cudaMalloc(&d_c, 1);
 
-	mmath::sum_for_look_ahead_carry<<<blocks_per_grid, threads_per_block>>>(thrust::raw_pointer_cast(data.data()), gs, len, d_c);
+	mmath::sum_for_look_ahead_carry<<<blocks_per_grid, threads_per_block>>>(thrust::raw_pointer_cast(data.data()), gs, len, mmath::Digits::LOG_RADIX, d_c);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(&c, d_c, 1, cudaMemcpyDeviceToHost);
@@ -163,3 +171,29 @@ void mmath::Digits::add(const mmath::Digits &x) {
 	cudaFree(ps);
 }
 #endif
+
+void mmath::Digits::sub(const mmath::Digits &x) {
+	/*
+	if(x == *this) {
+		to_zero();
+		return;
+	}
+	*/
+
+	mmath::Digits s = x;
+	size_t len = size();
+	if(s.size() < len) s.data.resize(len);	
+
+	i32 threads_per_block = 512;
+	i32 blocks_per_grid;
+	if(len & (512 - 1) == 0) blocks_per_grid = len >> 9;
+	else blocks_per_grid = (len >> 9) + 1;
+
+	mmath::not_for_complement<<<blocks_per_grid, threads_per_block>>>(thrust::raw_pointer_cast(s.data.data()), len, mmath::Digits::LOG_RADIX);
+	cudaDeviceSynchronize();
+
+	add(s);
+	add(1);
+	pop_msd();
+	normalize();
+}

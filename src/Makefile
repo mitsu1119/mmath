@@ -4,7 +4,7 @@ BIN = ../bin
 BINNAME = bin
 DIST = ../dist
 
-SRCS = Int.cu Digits.cu ../test/Digits/add.cu # test.cu
+SRCS = Int.cu Digits.cu test.cu
 OBJS = $(subst .o ,.o $(DIST)/,$(DIST)/$(SRCS:%.cu=%.o))
 
 .PHONY: all

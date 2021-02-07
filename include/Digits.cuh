@@ -23,10 +23,13 @@ __global__ void decode_hex_for_digits(const char *st, size_t len, i32 size, i64 
 __global__ void sum_for_look_ahead(i64 *a, const i64 *b, size_t len, i32 LOG_RADIX, char *ps, char *gs);
 
 // Digitsのlook-ahead方式用の和、dataにcarryを足していく。最後の桁上げはcに格納
-__global__ void sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, char *c);
+__global__ void sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, i32 LOG_RADIX, char *c);
 
 // Digitsのlook-ahead方式用のcarryの計算
 __global__ void carrys_for_look_ahead(char *ps, char *gs, size_t k, size_t len);
+
+// Digitsの減算用のnot, (2^LOG_RADIX)-1の補数を求める
+__global__ void not_for_complement(i64 *data, size_t len, i32 LOG_RADIX);
 
 class Digits {
 private:
@@ -58,8 +61,8 @@ public:
 
 	void normalize();	// 不必要な上位桁のゼロを削除する
 
-	// this += x
-	void add(const mmath::Digits &x);
+	void add(const mmath::Digits &xx);	// this += x
+	void sub(const mmath::Digits &x);	// this -= x, this >= x が前提
 
 	// 文字列を16進数と解釈して格納
 	void from_hex(const char *st, size_t len_st);
