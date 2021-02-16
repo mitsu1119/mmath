@@ -34,8 +34,8 @@ void mmath::sum_for_look_ahead(i64 *a, const i64 *b, size_t len, i32 LOG_RADIX, 
 
 	if(i < len) {
 		gs[i] = (a[i] + b[i]) >> LOG_RADIX;
-		a[i] = (a[i] + b[i]) & ((1 << LOG_RADIX) - 1);
-		ps[i] = (char)(a[i] == ((1 << LOG_RADIX) - 1));
+		a[i] = (a[i] + b[i]) & (Digits::RADIX - 1);
+		ps[i] = (char)(a[i] == (Digits::RADIX - 1));
 	}
 }
 
@@ -60,7 +60,7 @@ __global__
 void mmath::sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, i32 LOG_RADIX, char *c) {
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 	if(i < len) {
-		data[i] = (data[i] + carrys[i - 1]) & ((1 << LOG_RADIX) - 1);
+		data[i] = (data[i] + carrys[i - 1]) & (Digits::RADIX - 1);
 	}
 	if(i == len - 1) *c = carrys[i];
 }
@@ -68,7 +68,7 @@ void mmath::sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, i32 LO
 __global__
 void mmath::not_for_complement(i64 *data, size_t len, i32 LOG_RADIX) {
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
-	if(i < len) data[i] = (~data[i]) & ((1 << LOG_RADIX) - 1);
+	if(i < len) data[i] = (~data[i]) & (Digits::RADIX - 1);
 }
 
 void mmath::Digits::print(bool hex) const {
@@ -180,7 +180,7 @@ void mmath::Digits::sub(const mmath::Digits &x) {
 	}
 	*/
 
-	mmath::Digits s = x;
+	mmath::Digits s(x);
 	size_t len = size();
 	if(s.size() < len) s.data.resize(len);	
 
@@ -193,7 +193,19 @@ void mmath::Digits::sub(const mmath::Digits &x) {
 	cudaDeviceSynchronize();
 
 	add(s);
-	add(1);
+	increment();
 	pop_msd();
 	normalize();
+}
+
+void mmath::Digits::increment() {
+	size_t idx = first_non_radixmax_index();
+
+	if(idx >= data.size()) {
+		thrust::fill(data.begin(), data.end(), 0);
+		push_msd(1);
+	} else {
+		thrust::fill(data.begin(), data.begin() + idx, 0);
+		data[idx] += 1;
+	}
 }
