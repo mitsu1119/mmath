@@ -1,5 +1,6 @@
+CC = nvcc
 SRC = src
-INCLUDE = include
+INCLUDE = ./include
 BIN = ./bin
 BINNAME = bin
 DIST = ./dist
@@ -27,3 +28,7 @@ clean:
 
 $(TEST)/%.cu: $(INCLUDE) $(BIN) $(DIST)
 	cd $(SRC) && make ../$(TEST)/$*.cu
+
+.PHONY: test
+test:
+	$(CC) $(target) -L$(BIN) -lmmath -I$(INCLUDE) -o $(BIN)/$(BINNAME)

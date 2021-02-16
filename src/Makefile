@@ -1,18 +1,18 @@
 CC = nvcc
-CXXFLAGS = -c --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include
+CXXFLAGS = --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include -dc
 BIN = ../bin
-BINNAME = bin
+BINNAME = libmmath.a
 DIST = ../dist
 
-SRCS = Int.cu Digits.cu test.cu
+SRCS = Int.cu Digits.cu
 OBJS = $(subst .o ,.o $(DIST)/,$(DIST)/$(SRCS:%.cu=%.o))
 
 .PHONY: all
 all: $(SRCS) $(BIN)/$(BINNAME)
 
 $(BIN)/$(BINNAME): $(OBJS)
-	$(CC) $(OBJS) -o $(BIN)/$(BINNAME)
+	$(CC) -o $@ -lib $^
 
 $(DIST)/%.o: %.cu
-	$(CC) $(CXXFLAGS) $*.cu -o $(DIST)/$*.o
-
+	$(CC) -c $(CXXFLAGS) $*.cu -o $(DIST)/$*.o
+	$(CC) -dlink $(CXXFLAGS) $(DIST)/$*.o -o $(DIST)/$*.o
