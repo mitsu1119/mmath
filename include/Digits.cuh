@@ -57,6 +57,7 @@ public:
 	void print(bool hex = false) const;
 };
 
+namespace Digits_utils {
 // 長さlenの16進文字列を数値にデコードしてresに格納
 __host__ __device__ void small_hex_str_to_i64(const char *st, i32 len, i64 *res);
 
@@ -84,6 +85,7 @@ struct eq_radix {
 		return x == mmath::Digits::RADIX - 1;
 	}
 };
+}
 
 inline mmath::Digits::Digits(size_t len, i64 val): data(len, val) {
 }
@@ -104,7 +106,7 @@ inline size_t mmath::Digits::msd() const {
 }
 
 inline size_t mmath::Digits::first_non_radixmax_index() const {
-    return thrust::distance(data.begin(), thrust::find_if_not(data.begin(), data.begin() + data.size(), eq_radix()));
+    return thrust::distance(data.begin(), thrust::find_if_not(data.begin(), data.begin() + data.size(), Digits_utils::eq_radix()));
 }
 
 inline void mmath::Digits::to_zero() {
