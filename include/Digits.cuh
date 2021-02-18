@@ -31,7 +31,7 @@ public:
 
 	// log2(digitsの基数)、つまり基数は2の何乗かを示す
 	// 16進数への変換を考えて、LOG_RADIX % 4 = 0 である必要あり
-	static constexpr i32 LOG_RADIX = 28;
+	static constexpr i32 LOG_RADIX = 8;
 
 	// 16進数として見たときの各桁の長さ
 	static constexpr i32 LOG_16_RADIX = mmath::Digits::LOG_RADIX >> 2;
@@ -145,14 +145,14 @@ inline void mmath::Digits::normalize() {
 inline void mmath::Digits::align() {
 	for(size_t i = 0; i < size() - 1; i++) {
 		if(data[i] >= RADIX) {
-			data[i + 1] += data[i] / RADIX;
-			data[i] %= RADIX;
+			data[i + 1] += data[i] >> LOG_RADIX;
+			data[i] &= (RADIX - 1);
 		}
 	}
 
 	if(msd() >= RADIX) {
-		push_msd(msd() / RADIX);
-		data[size() - 2] %= RADIX;
+		push_msd(msd() >> LOG_RADIX);
+		data[size() - 2] &= (RADIX - 1);
 	}
 }
 

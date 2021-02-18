@@ -229,3 +229,31 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 }
 #endif
 
+// host
+// sequential ntt
+#if MMATH_DIGITS_MUL_SEQ_NTT
+void mmath::Digits::mul(const mmath::Digits &x) {
+	// vector length: 2^20
+	// digit size: 2^20
+	constexpr digit_type MOD = 998244353;
+	constexpr digit_type g = 3;
+	size_t s = size() + x.size() - 1;
+	size_t N = 1;
+	while(N < s) N <<= 1;
+
+	mmath::Digits x_(x);
+	data.resize(N);
+	x_.data.resize(N);
+
+	mmath::NTT::ntt<digit_type, MOD, g>(data);
+	mmath::NTT::ntt<digit_type, MOD, g>(x_.data);
+
+	// thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), thrust::multiplies<digit_type>());
+	for(size_t i = 0; i < N; i++) data[i] = mmath::NTT::mul<digit_type, MOD>(data[i], x_.data[i]);
+
+	mmath::NTT::ntt<digit_type, MOD, g>(data, true);
+
+	normalize();
+	align();
+}
+#endif
