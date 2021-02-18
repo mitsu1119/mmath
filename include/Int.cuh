@@ -33,6 +33,7 @@ public:
 
 	void add(const mmath::Int &x);
 	void sub(const mmath::Int &x);
+	void mul(const mmath::Int &x);
 
 	// operators
 	friend std::ostream &operator<<(std::ostream &os, const mmath::Int &x) {
@@ -47,6 +48,10 @@ inline void mmath::Int::add(const mmath::Int &x) {
 
 inline void mmath::Int::sub(const mmath::Int &x) {
 	digits.sub(x.digits);
+}
+
+inline void mmath::Int::mul(const mmath::Int &x) {
+	digits.mul(x.digits);
 }
 
 }

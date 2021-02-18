@@ -4,10 +4,14 @@
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
 #include "util.cuh"
+#include "ntt.cuh"
 
 // add algorithm
 // #define MMATH_DIGITS_ADD_SEQUENTIAL 1
 #define MMATH_DIGITS_ADD_PARALLEL 1
+
+// mul algorithm
+#define MMATH_DIGITS_MUL_SEQ_SCHOOL 1
 
 namespace mmath {
 
@@ -35,7 +39,7 @@ public:
 
 	size_t size() const;
 	i64 at(size_t i) const;
-	size_t msd() const;
+	i64 msd() const;
 
 	// radix-1以外になる最初の要素番号
 	size_t first_non_radixmax_index() const;
@@ -45,10 +49,12 @@ public:
 	void push_lsd(i64 num, size_t n = 1);
 	void pop_msd();
 
+	void align();	// RADIXを超える桁を解決してきゃりーを伝播させる
 	void normalize();	// 不必要な上位桁のゼロを削除する
 
 	void add(const mmath::Digits &xx);	// this += x
 	void sub(const mmath::Digits &x);	// this -= x, this >= x が前提
+	void mul(const mmath::Digits &x);
 	void increment();
 
 	// 文字列を16進数と解釈して格納
@@ -101,7 +107,7 @@ inline i64 mmath::Digits::at(size_t i) const {
 	return data[i];
 }
 
-inline size_t mmath::Digits::msd() const {
+inline i64 mmath::Digits::msd() const {
 	return data.back();
 }
 
@@ -130,6 +136,20 @@ inline void mmath::Digits::normalize() {
 	while(size() > 1) {
 		if(msd() == 0) pop_msd();
 		else break;
+	}
+}
+
+inline void mmath::Digits::align() {
+	for(size_t i = 0; i < size() - 1; i++) {
+		if(data[i] >= RADIX) {
+			data[i + 1] += data[i] / RADIX;
+			data[i] %= RADIX;
+		}
+	}
+
+	if(msd() >= RADIX) {
+		push_msd(msd() / RADIX);
+		data[size() - 2] %= RADIX;
 	}
 }
 

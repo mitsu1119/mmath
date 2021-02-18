@@ -208,3 +208,23 @@ void mmath::Digits::increment() {
 		data[idx] += 1;
 	}
 }
+
+// host
+// sequential and naive
+#if MMATH_DIGITS_MUL_SEQ_SCHOOL
+void mmath::Digits::mul(const mmath::Digits &x) {
+	mmath::Digits a(*this);
+	to_zero();
+	
+	for(size_t i = 0; i < x.size(); i++) {
+		mmath::Digits tmp(i, 0);
+		i64 carry = 0;
+		for(size_t j = 0; j < a.size(); j++) {
+			tmp.push_msd((a.data[j] * x.data[i] + carry) % RADIX);
+			carry = (a.data[j] * x.data[i] + carry) / RADIX;
+		}
+		if(carry != 0) tmp.push_msd(carry);
+		add(tmp);
+	}
+}
+#endif
