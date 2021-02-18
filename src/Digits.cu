@@ -1,7 +1,7 @@
 #include "Digits.cuh"
 
 __host__ __device__ 
-void mmath::Digits_utils::small_hex_str_to_i64(const char *st, i32 len, i64 *res) {
+void mmath::Digits_utils::small_hex_str_to_digit_type(const char *st, i32 len, digit_type *res) {
 	*res = 0;
 	for(i32 i = 0; i < len; i++) {
 		char c = st[i];
@@ -16,19 +16,19 @@ void mmath::Digits_utils::small_hex_str_to_i64(const char *st, i32 len, i64 *res
 }
 
 __global__
-void mmath::Digits_utils::decode_hex_for_digits(const char *st, size_t len, i32 size, i64 *data, size_t N) {
+void mmath::Digits_utils::decode_hex_for_digits(const char *st, size_t len, i32 size, digit_type *data, size_t N) {
 	assert(N != 0);
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 
 	if(i == N - 1) {
-		mmath::Digits_utils::small_hex_str_to_i64(st, len - i * size, &(data[i]));
+		mmath::Digits_utils::small_hex_str_to_digit_type(st, len - i * size, &(data[i]));
 	} else if(i < N - 1) {
-		mmath::Digits_utils::small_hex_str_to_i64(&(st[len - size * (i + 1)]), size, &(data[i]));
+		mmath::Digits_utils::small_hex_str_to_digit_type(&(st[len - size * (i + 1)]), size, &(data[i]));
 	}
 }
 
 __global__
-void mmath::Digits_utils::sum_for_look_ahead(i64 *a, const i64 *b, size_t len, i32 LOG_RADIX, char *ps, char *gs) {
+void mmath::Digits_utils::sum_for_look_ahead(digit_type *a, const digit_type *b, size_t len, i32 LOG_RADIX, char *ps, char *gs) {
 	assert(len != 0);
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -57,7 +57,7 @@ void mmath::Digits_utils::carrys_for_look_ahead(char *ps, char *gs, size_t k, si
 }
 
 __global__
-void mmath::Digits_utils::sum_for_look_ahead_carry(i64 *data, char *carrys, size_t len, i32 LOG_RADIX, char *c) {
+void mmath::Digits_utils::sum_for_look_ahead_carry(digit_type *data, char *carrys, size_t len, i32 LOG_RADIX, char *c) {
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 	if(i < len) {
 		data[i] = (data[i] + carrys[i - 1]) & (Digits::RADIX - 1);
@@ -66,7 +66,7 @@ void mmath::Digits_utils::sum_for_look_ahead_carry(i64 *data, char *carrys, size
 }
 
 __global__
-void mmath::Digits_utils::not_for_complement(i64 *data, size_t len, i32 LOG_RADIX) {
+void mmath::Digits_utils::not_for_complement(digit_type *data, size_t len, i32 LOG_RADIX) {
 	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
 	if(i < len) data[i] = (~data[i]) & (Digits::RADIX - 1);
 }
@@ -111,8 +111,8 @@ void mmath::Digits::add(const mmath::Digits &x) {
 	// if(x == 0) return;
 	if(size() < x.size()) data.resize(x.size());
 
-	i64 buf, carry = 0;
-	i64 rd;
+	digit_type buf, carry = 0;
+	digit_type rd;
 	for(size_t i = 0; i < size(); i++) {
 		rd = (i < x.size()) ? x.at(i) : 0;
 		buf = at(i) + rd + carry;
@@ -218,7 +218,7 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	
 	for(size_t i = 0; i < x.size(); i++) {
 		mmath::Digits tmp(i, 0);
-		i64 carry = 0;
+		digit_type carry = 0;
 		for(size_t j = 0; j < a.size(); j++) {
 			tmp.push_msd((a.data[j] * x.data[i] + carry) % RADIX);
 			carry = (a.data[j] * x.data[i] + carry) / RADIX;
@@ -228,3 +228,4 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	}
 }
 #endif
+
