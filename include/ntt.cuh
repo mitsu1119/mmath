@@ -49,8 +49,8 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 	std::vector<T> ws(nh);
 	tmp = 1;
 	T root;
-	if(rev) root = mmath::NTT::modinv<T, MOD>(mmath::NTT::pow<T, MOD>(primitive_root, (MOD - 1) / n));
-	else root = mmath::NTT::pow<T, MOD>(primitive_root, (MOD - 1) / n);
+	if(rev) root = mmath::NTT::modinv<T, MOD>(mmath::NTT::pow<T, MOD>(primitive_root, mmath::NTT::mul<T, MOD>(MOD - 1, mmath::NTT::modinv<T, MOD>(n))));
+	else root = mmath::NTT::pow<T, MOD>(primitive_root, mmath::NTT::mul<T, MOD>(MOD - 1, mmath::NTT::modinv<T, MOD>(n)));
 	for(i = 0; i < nh; i++) {
 		ws[i] = tmp;
 		tmp = mmath::NTT::mul<T, MOD>(tmp, root);
@@ -60,12 +60,7 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 	i = 0;	
 	for(j = 1; j < n - 1; j++) {
 		for(k = nh; k > (i ^= k); k >>= 1);
-		if(j < i) {
-			// thrust::swap
-			tmp = f[i];
-			f[i] = f[j];
-			f[j] = tmp;
-		}
+		if(j < i) thrust::swap(f[i], f[j]);
 	}
 
 	T l, r;
@@ -86,6 +81,10 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 	}
 
 	if(rev) {
+		std::cout << "rev: [";
+		for(i = 0; i < n; i++) std::cout << f[i] << ", ";
+		std::cout << std::endl;
+
 		T inv = mmath::NTT::modinv<T, MOD>(n);
 		for(i = 0; i < n; i++) {
 			f[i] = mmath::NTT::mul<T, MOD>(f[i], inv);

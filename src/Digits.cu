@@ -233,13 +233,15 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 // sequential ntt
 #if MMATH_DIGITS_MUL_SEQ_NTT
 void mmath::Digits::mul(const mmath::Digits &x) {
-	// vector length: 2^20
-	// digit size: 2^20
-	constexpr digit_type MOD = 998244353;
-	constexpr digit_type g = 3;
+	constexpr digit_type MOD = 3221225473;	// 3 * 2^30 + 1
+	constexpr digit_type g = 5;
 	size_t s = size() + x.size() - 1;
 	size_t N = 1;
 	while(N < s) N <<= 1;
+	std::cout << "N: " << size() << " " << x.size() << " " << N << std::endl;
+	std::cout << "data: [";
+	for(size_t i = 0; i < data.size(); i++) std::cout << data[i] << ", ";
+	std::cout << std::endl << std::endl;
 
 	mmath::Digits x_(x);
 	data.resize(N);
@@ -250,6 +252,10 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 
 	// thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), thrust::multiplies<digit_type>());
 	for(size_t i = 0; i < N; i++) data[i] = mmath::NTT::mul<digit_type, MOD>(data[i], x_.data[i]);
+
+	std::cout << "data: [";
+	for(size_t i = 0; i < N; i++) std::cout << data[i] << ", ";
+	std::cout << std::endl;
 
 	mmath::NTT::ntt<digit_type, MOD, g>(data, true);
 

@@ -6,8 +6,9 @@
 using namespace mmath;
 int main() {
 
-	Int c("fffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
-	Int d("abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
+	Int c("ffffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
+	Int d("ffffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
+	// Int d("abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
 
 	// 計測用(start)
 	float elapsed;

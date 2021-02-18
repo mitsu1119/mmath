@@ -31,7 +31,7 @@ public:
 
 	// log2(digitsの基数)、つまり基数は2の何乗かを示す
 	// 16進数への変換を考えて、LOG_RADIX % 4 = 0 である必要あり
-	static constexpr i32 LOG_RADIX = 8;
+	static constexpr i32 LOG_RADIX = 12;
 
 	// 16進数として見たときの各桁の長さ
 	static constexpr i32 LOG_16_RADIX = mmath::Digits::LOG_RADIX >> 2;
