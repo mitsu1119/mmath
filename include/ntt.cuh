@@ -81,10 +81,6 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 	}
 
 	if(rev) {
-		std::cout << "rev: [";
-		for(i = 0; i < n; i++) std::cout << f[i] << ", ";
-		std::cout << std::endl;
-
 		T inv = mmath::NTT::modinv<T, MOD>(n);
 		for(i = 0; i < n; i++) {
 			f[i] = mmath::NTT::mul<T, MOD>(f[i], inv);

@@ -238,10 +238,6 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	size_t s = size() + x.size() - 1;
 	size_t N = 1;
 	while(N < s) N <<= 1;
-	std::cout << "N: " << size() << " " << x.size() << " " << N << std::endl;
-	std::cout << "data: [";
-	for(size_t i = 0; i < data.size(); i++) std::cout << data[i] << ", ";
-	std::cout << std::endl << std::endl;
 
 	mmath::Digits x_(x);
 	data.resize(N);
@@ -250,12 +246,7 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	mmath::NTT::ntt<digit_type, MOD, g>(data);
 	mmath::NTT::ntt<digit_type, MOD, g>(x_.data);
 
-	// thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), thrust::multiplies<digit_type>());
-	for(size_t i = 0; i < N; i++) data[i] = mmath::NTT::mul<digit_type, MOD>(data[i], x_.data[i]);
-
-	std::cout << "data: [";
-	for(size_t i = 0; i < N; i++) std::cout << data[i] << ", ";
-	std::cout << std::endl;
+	thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), thrust::multiplies<digit_type>());
 
 	mmath::NTT::ntt<digit_type, MOD, g>(data, true);
 
