@@ -243,6 +243,32 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	data.resize(N);
 	x_.data.resize(N);
 
+	mmath::NTT::ntt_cpu<digit_type, MOD, g>(data);
+	mmath::NTT::ntt_cpu<digit_type, MOD, g>(x_.data);
+
+	thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), mmath::NTT::mul_op<digit_type, MOD>());
+
+	mmath::NTT::ntt_cpu<digit_type, MOD, g>(data, true);
+
+	normalize();
+	align();
+}
+#endif
+
+// device
+// parallel ntt
+#if MMATH_DIGITS_MUL_PARALLEL_NTT
+void mmath::Digits::mul(const mmath::Digits &x) {
+	constexpr digit_type MOD = 3221225473;	// 3 * 2^30 + 1
+	constexpr digit_type g = 5;
+	size_t s = size() + x.size() - 1;
+	size_t N = 1;
+	while(N < s) N <<= 1;
+
+	mmath::Digits x_(x);
+	data.resize(N);
+	x_.data.resize(N);
+
 	mmath::NTT::ntt<digit_type, MOD, g>(data);
 	mmath::NTT::ntt<digit_type, MOD, g>(x_.data);
 

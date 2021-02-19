@@ -12,7 +12,8 @@
 
 // mul algorithm
 // #define MMATH_DIGITS_MUL_SEQ_SCHOOL 1
-#define MMATH_DIGITS_MUL_SEQ_NTT 1
+// #define MMATH_DIGITS_MUL_SEQ_NTT 1
+#define MMATH_DIGITS_MUL_PARALLEL_NTT 1
 
 namespace mmath {
 
