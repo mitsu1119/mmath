@@ -22,6 +22,14 @@ inline T mul(const T &a, const T &b) {
 }
 
 template <typename T, T MOD>
+struct mul_op {
+	__host__ __device__
+	T operator()(const T &a, const T &b) {
+		return (a * b) % MOD;
+	}
+};
+
+template <typename T, T MOD>
 inline T pow(T x, T n) {
 	T res = 1;
 	for(; n > 0; n >>= 1, x = mmath::NTT::mul<T, MOD>(x, x)) {

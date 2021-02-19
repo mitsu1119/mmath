@@ -246,7 +246,7 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	mmath::NTT::ntt<digit_type, MOD, g>(data);
 	mmath::NTT::ntt<digit_type, MOD, g>(x_.data);
 
-	thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), thrust::multiplies<digit_type>());
+	thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), mmath::NTT::mul_op<digit_type, MOD>());
 
 	mmath::NTT::ntt<digit_type, MOD, g>(data, true);
 
