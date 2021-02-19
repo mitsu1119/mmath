@@ -6,6 +6,10 @@
 #include "util.cuh"
 #include "ntt.cuh"
 
+// align algorithm
+// #define MMATH_DIGITS_ALIGN_SEQUENTIAL 1
+#define MMATH_DIGITS_ALIGN_PARALLEL 1
+
 // add algorithm
 // #define MMATH_DIGITS_ADD_SEQUENTIAL 1
 #define MMATH_DIGITS_ADD_PARALLEL 1
@@ -87,6 +91,12 @@ __global__ void carrys_for_look_ahead(char *ps, char *gs, size_t k, size_t len);
 
 // Digitsの減算用のnot, (2^LOG_RADIX)-1の補数を求める
 __global__ void not_for_complement(digit_type *data, size_t len, i32 LOG_RADIX);
+
+// x[i]がrと等しかった時、そのインデックス(i)をp[i]に代入、そうでないときはnを代入する
+__global__ void assign_eq_index_else_n(const digit_type *x, digit_type r, digit_type *p, digit_type n, size_t len);
+
+// align用のうまくやるやつ
+__global__ void assign_eq_index_else_n(const digit_type *x, digit_type r, digit_type *p, digit_type n, size_t len, digit_type l);
   
 // 要素が最大値-1と等しいか
 struct eq_radix {
@@ -95,6 +105,31 @@ struct eq_radix {
 		return x == mmath::Digits::RADIX - 1;
 	}
 };
+
+// 要素をRADIXで割る
+struct divide_radix {
+    __host__ __device__
+	digit_type operator()(digit_type x) {
+		return x >> mmath::Digits::LOG_RADIX;
+	}
+};
+
+// 要素をRADIXでmodとって、その後cを加算
+struct mod_radix_add {
+    __host__ __device__
+	digit_type operator()(digit_type x, digit_type c) {
+		return (x & (mmath::Digits::RADIX - 1)) + c;
+	}
+};
+
+// 要素からRADIX-1を引く
+struct sub_radix_1 {
+	__host__ __device__
+	digit_type operator()(digit_type x) {
+		return x - (mmath::Digits::RADIX - 1);
+	}
+};
+
 }
 
 inline mmath::Digits::Digits(size_t len, digit_type val): data(len, val) {
@@ -140,20 +175,6 @@ inline void mmath::Digits::normalize() {
 	while(size() > 1) {
 		if(msd() == 0) pop_msd();
 		else break;
-	}
-}
-
-inline void mmath::Digits::align() {
-	for(size_t i = 0; i < size() - 1; i++) {
-		if(data[i] >= RADIX) {
-			data[i + 1] += data[i] >> LOG_RADIX;
-			data[i] &= (RADIX - 1);
-		}
-	}
-
-	if(msd() >= RADIX) {
-		push_msd(msd() >> LOG_RADIX);
-		data[size() - 2] &= (RADIX - 1);
 	}
 }
 

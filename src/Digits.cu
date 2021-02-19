@@ -71,6 +71,24 @@ void mmath::Digits_utils::not_for_complement(digit_type *data, size_t len, i32 L
 	if(i < len) data[i] = (~data[i]) & (Digits::RADIX - 1);
 }
 
+__global__
+void mmath::Digits_utils::assign_eq_index_else_n(const digit_type *x, digit_type r, digit_type *p, digit_type n, size_t len) {
+	i32 i = blockDim.x * blockIdx.x + threadIdx.x;
+	if(i >= len) return;
+
+	if(x[i] == r) p[i] = i;
+	else p[i] = n;
+}
+
+__global__
+void mmath::Digits_utils::assign_eq_index_else_n(const digit_type *x, digit_type r, digit_type *p, digit_type n, size_t len, digit_type l) {
+	i32 i = blockDim.x * blockIdx.x + threadIdx.x + l;
+	if(i >= len) return;
+
+	if(x[i] < r) p[i] = i;
+	else p[i] = n;
+}
+
 void mmath::Digits::print(bool hex) const {
 	if(hex) std::cout << std::hex;
 	for(auto i: data) std::cout << i << " ";
@@ -103,6 +121,55 @@ void mmath::Digits::from_hex(const char *st, size_t len_st) {
 
 	cudaFree(d_st);
 }
+
+#if MMATH_DIGITS_ALIGN_SEQUENTIAL
+void mmath::Digits::align() {
+	for(size_t i = 0; i < size() - 1; i++) {
+		if(data[i] >= RADIX) {
+			data[i + 1] += data[i] >> LOG_RADIX;
+			data[i] &= (RADIX - 1);
+		}
+	}
+
+	if(msd() >= RADIX) {
+		push_msd(msd() >> LOG_RADIX);
+		data[size() - 2] &= (RADIX - 1);
+	}
+}
+#endif
+
+#if MMATH_DIGITS_ALIGN_PARALLEL
+void mmath::Digits::align() {
+	size_t n = size();
+	thrust::device_vector<digit_type> c(n);
+
+	while(RADIX < *thrust::max_element(data.begin(), data.end() - 1)) {
+		c[0] = 0;
+		thrust::transform(data.begin(), data.end() - 1, c.begin() + 1, mmath::Digits_utils::divide_radix());
+		thrust::transform(data.begin(), data.end() - 1, c.begin(), data.begin(), mmath::Digits_utils::mod_radix_add());
+		data[n - 1] += c[n - 1];
+	}
+
+	i32 dB = MAX_X_THREAD_SIZE;
+	i32 dG1 = (n >> LOG_MAX_X_THREAD_SIZE) + 1;
+	i32 dG2;
+	thrust::device_vector<digit_type> p(n);
+	digit_type l, m;
+	while(RADIX == *thrust::max_element(data.begin(), data.end() - 1)) {
+		mmath::Digits_utils::assign_eq_index_else_n<<<dG1, dB>>>(thrust::raw_pointer_cast(data.data()), RADIX, thrust::raw_pointer_cast(p.data()), n - 1, n);
+		l = *thrust::min_element(p.begin(), p.end());
+
+		dG2 = ((n - l - 1) >> LOG_MAX_X_THREAD_SIZE) + 1;
+		mmath::Digits_utils::assign_eq_index_else_n<<<dG2, dB>>>(thrust::raw_pointer_cast(data.data()), RADIX - 1, thrust::raw_pointer_cast(p.data()), n - 1, n, l + 1);
+
+		m = *thrust::min_element(p.begin() + l + 1, p.end());
+		data[l] -= RADIX;
+
+		thrust::transform(data.begin() + l + 1, data.begin() + m - 1, data.begin() + l + 1, mmath::Digits_utils::sub_radix_1());
+		data[m]++;
+	}
+}
+#endif
 
 // host
 // sequential algorithm

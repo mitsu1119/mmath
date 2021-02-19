@@ -144,12 +144,11 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 		if(j < i) thrust::swap(f[i], f[j]);
 	}
 
-	T l, r;
 	for(m = 2; m <= n; m <<= 1) {
 		mh = m >> 1;
 		ts = n / m;
 		dim3 dB(BLOCK_SIZE_DIV1, BLOCK_SIZE_DIV2);
-		dim3 dG(mh / dB.x + 1, ts / dB.y + 1);
+		dim3 dG((mh >> LOG_BLOCK_SIZE_DIV1) + 1, (ts >> LOG_BLOCK_SIZE_DIV2) + 1);
 		mmath::NTT::ntt_butterfly<T, MOD><<<dG, dB>>>(thrust::raw_pointer_cast(f.data()), thrust::raw_pointer_cast(ws.data()), n, m, mh, ts);
 		if(m == n) break;
 	}
