@@ -139,7 +139,6 @@ void mmath::Digits::align() {
 #endif
 
 #if MMATH_DIGITS_ALIGN_PARALLEL
-// TODO: {0, 0, 0, RADIX} みたいなdigitsのalignをチェックする({0,0,0,0,1}になってくれる？)
 void mmath::Digits::align() {
 	size_t n = size();
 	thrust::device_vector<digit_type> c(n);
@@ -166,8 +165,13 @@ void mmath::Digits::align() {
 		m = *thrust::min_element(p.begin() + l + 1, p.end());
 		data[l] -= RADIX;
 
-		thrust::transform(data.begin() + l + 1, data.begin() + m - 1, data.begin() + l + 1, mmath::Digits_utils::sub_radix_1());
+		if(l + 2 <= m) thrust::transform(data.begin() + l + 1, data.begin() + m - 1, data.begin() + l + 1, mmath::Digits_utils::sub_radix_1());
 		data[m]++;
+	}
+
+	if(data[n - 1] >= RADIX) {
+		data.push_back(data[n - 1] >> LOG_RADIX);
+		data[n - 1] &= (RADIX - 1);
 	}
 }
 #endif
