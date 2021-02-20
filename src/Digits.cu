@@ -344,13 +344,9 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 
 	// rotation table
 	thrust::device_vector<digit_type> ws(nh);
-	digit_type tmp = 1;
-	digit_type root;
-	root = mmath::NTT::pow<digit_type, MOD>(g, mmath::NTT::mul<digit_type, MOD>(MOD - 1, mmath::NTT::modinv<digit_type, MOD>(n)));
-	for(size_t i = 0; i < nh; i++) {
-		ws[i] = tmp;
-		tmp = mmath::NTT::mul<digit_type, MOD>(tmp, root);
-	}
+	i32 dB = MAX_X_THREAD_SIZE;
+	i32 dG = (nh >> LOG_MAX_X_THREAD_SIZE) + 1;
+	mmath::NTT::gen_rotation_table<digit_type, MOD, g><<<dG, dB>>>(thrust::raw_pointer_cast(ws.data()), nh);
 
 	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(data, ws);
 	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(x_.data, ws);

@@ -126,6 +126,15 @@ void ntt_butterfly_dit(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t 
 	f[j + mh] = mmath::NTT::mul<T, MOD>(mmath::NTT::sub<T, MOD>(l, r), ws[k]);
 }
 
+template <typename T, T MOD, T primitive_root>
+__global__
+void gen_rotation_table(T *ws, size_t nh) {
+	i64 i = blockDim.x * blockIdx.x + threadIdx.x;
+
+	T root = mmath::NTT::pow<T, MOD>(primitive_root, mmath::NTT::mul<T, MOD>(MOD - 1, mmath::NTT::modinv<T, MOD>(nh << 1)));
+	if(i < nh) ws[i] = mmath::NTT::pow<T, MOD>(root, i);
+}
+
 template <typename T, T MOD>
 __global__
 void ntt_butterfly_dif(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t ts) {
