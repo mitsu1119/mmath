@@ -103,7 +103,24 @@ void ntt_cpu(thrust::device_vector<T> &f, bool rev = false) {
 
 template <typename T, T MOD>
 __global__
-void ntt_butterfly(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t ts) {
+void ntt_butterfly_dit(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t ts) {
+	i64 i = blockDim.y * blockIdx.y + threadIdx.y;
+	i64 j = (blockDim.x * blockIdx.x + threadIdx.x) * m + i;
+
+	if(i >= mh) return;
+	if(j >= n) return;
+
+	size_t k = i * ts;
+
+	T l = f[j];
+	T r = f[j + mh];
+	f[j] = mmath::NTT::add<T, MOD>(l, r);
+	f[j + mh] = mmath::NTT::mul<T, MOD>(mmath::NTT::sub<T, MOD>(l, r), ws[k]);
+}
+
+template <typename T, T MOD>
+__global__
+void ntt_butterfly_dif(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t ts) {
 	i64 i = (blockDim.y * blockIdx.y + threadIdx.y) * m;
 	i64 j = blockDim.x * blockIdx.x + threadIdx.x + i;
 
@@ -118,12 +135,12 @@ void ntt_butterfly(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t ts) 
 }
 
 template <typename T, T MOD, T primitive_root>
-void ntt(thrust::device_vector<T> &f, bool rev = false) {
+void ntt_no_bitrev(thrust::device_vector<T> &f, bool rev = false) {
 	size_t n = f.size();
 	if(n == 1) return;
 	size_t nh = n >> 1;
 
-	size_t i, j, k, m, mh, ts;
+	size_t i, m, mh, ts;
 	T tmp;
 
 	// rotation table
@@ -137,26 +154,30 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 		tmp = mmath::NTT::mul<T, MOD>(tmp, root);
 	}
 
-	// bit rev
-	i = 0;	
-	for(j = 1; j < n - 1; j++) {
-		for(k = nh; k > (i ^= k); k >>= 1);
-		if(j < i) thrust::swap(f[i], f[j]);
-	}
-
-	for(m = 2; m <= n; m <<= 1) {
-		mh = m >> 1;
-		ts = n / m;
-		dim3 dB(BLOCK_SIZE_DIV1, BLOCK_SIZE_DIV2);
-		dim3 dG((mh >> LOG_BLOCK_SIZE_DIV1) + 1, (ts >> LOG_BLOCK_SIZE_DIV2) + 1);
-		mmath::NTT::ntt_butterfly<T, MOD><<<dG, dB>>>(thrust::raw_pointer_cast(f.data()), thrust::raw_pointer_cast(ws.data()), n, m, mh, ts);
-		if(m == n) break;
-	}
-
+	// butterfly
 	if(rev) {
+		// intt
+		for(m = 2; m <= n; m <<= 1) {
+			mh = m >> 1;
+			ts = n / m;
+			dim3 dB(BLOCK_SIZE_DIV1, BLOCK_SIZE_DIV2);
+			dim3 dG((mh >> LOG_BLOCK_SIZE_DIV1) + 1, (ts >> LOG_BLOCK_SIZE_DIV2) + 1);
+			mmath::NTT::ntt_butterfly_dif<T, MOD><<<dG, dB>>>(thrust::raw_pointer_cast(f.data()), thrust::raw_pointer_cast(ws.data()), n, m, mh, ts);
+			if(m == n) break;
+		}
 		T inv = mmath::NTT::modinv<T, MOD>(n);
 		thrust::device_vector<T> muls(n, inv);
 		thrust::transform(f.begin(), f.end(), muls.begin(), f.begin(), mmath::NTT::mul_op<T, MOD>());
+	} else {
+		// ntt
+		for(m = n; m >= 2; m >>= 1) {
+			mh = m >> 1;
+			ts = n / m;
+			dim3 dB(BLOCK_SIZE_DIV1, BLOCK_SIZE_DIV2);
+			dim3 dG((ts >> LOG_BLOCK_SIZE_DIV1) + 1, (mh >> LOG_BLOCK_SIZE_DIV2) + 1);
+			mmath::NTT::ntt_butterfly_dit<T, MOD><<<dG, dB>>>(thrust::raw_pointer_cast(f.data()), thrust::raw_pointer_cast(ws.data()), n, m, mh, ts);
+			if(m == 2) break;
+		}
 	}
 }
 

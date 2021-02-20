@@ -9,9 +9,11 @@ int main() {
 	Int c("ffffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
 	Int d("ffffffffabcdef123456789ffffffffffabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890abcdef1234567890deadbeefdeadbeefabcdef1234567890");
 
-	// 計測用(start)
+	// 計測用(variable)
 	float elapsed;
 	cudaEvent_t start, stop;
+
+	// 計測用(start)
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
