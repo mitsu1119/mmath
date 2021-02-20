@@ -31,4 +31,4 @@ $(TEST)/%.cu: $(INCLUDE) $(BIN) $(DIST)
 
 .PHONY: test
 test:
-	$(CC) $(target) -L$(BIN) -lmmath -I$(INCLUDE) -o $(BIN)/$(BINNAME)
+	$(CC) $(target) -L$(BIN) -lmmath --expt-extended-lambda -I$(INCLUDE) -o $(BIN)/$(BINNAME)

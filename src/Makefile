@@ -1,5 +1,5 @@
 CC = nvcc
-CXXFLAGS = --compiler-options -Wall --compiler-options -Wextra -O2 -std=c++17 -I ../include -dc
+CXXFLAGS = --compiler-options -Wall --compiler-options -Wextra -O2 --expt-extended-lambda -std=c++17 -I ../include -dc
 BIN = ../bin
 BINNAME = libmmath.a
 DIST = ../dist

@@ -172,10 +172,8 @@ inline void mmath::Digits::pop_msd() {
 }
 
 inline void mmath::Digits::normalize() {
-	while(size() > 1) {
-		if(msd() == 0) pop_msd();
-		else break;
-	}
+	auto iter = thrust::find_if_not(thrust::device, data.rbegin(), data.rend(), []__device__(const digit_type &x)->bool{ return x == 0; });
+	if(iter != data.rend()) data.resize(thrust::distance(iter, data.rend()));
 }
 
 }

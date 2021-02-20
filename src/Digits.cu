@@ -139,6 +139,7 @@ void mmath::Digits::align() {
 #endif
 
 #if MMATH_DIGITS_ALIGN_PARALLEL
+// TODO: {0, 0, 0, RADIX} みたいなdigitsのalignをチェックする({0,0,0,0,1}になってくれる？)
 void mmath::Digits::align() {
 	size_t n = size();
 	thrust::device_vector<digit_type> c(n);
