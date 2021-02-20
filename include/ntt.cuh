@@ -155,9 +155,8 @@ void ntt(thrust::device_vector<T> &f, bool rev = false) {
 
 	if(rev) {
 		T inv = mmath::NTT::modinv<T, MOD>(n);
-		for(i = 0; i < n; i++) {
-			f[i] = mmath::NTT::mul<T, MOD>(f[i], inv);
-		}
+		thrust::device_vector<T> muls(n, inv);
+		thrust::transform(f.begin(), f.end(), muls.begin(), f.begin(), mmath::NTT::mul_op<T, MOD>());
 	}
 }
 
