@@ -49,6 +49,14 @@ inline T modinv(const T &x) {
 	return mmath::NTT::pow<T, MOD>(x, MOD - 2);
 }
 
+template <typename T, T MOD>
+struct modinv_op {
+	__host__ __device__
+	T operator()(const T &x) {
+		return mmath::NTT::pow<T, MOD>(x, MOD - 2);
+	}
+};
+
 template <typename T, T MOD, T primitive_root>
 void ntt_cpu(thrust::device_vector<T> &f, bool rev = false) {
 	size_t n = f.size();
@@ -135,28 +143,16 @@ void ntt_butterfly_dif(T *f, const T *ws, size_t n, size_t m, size_t mh, size_t 
 }
 
 template <typename T, T MOD, T primitive_root>
-void ntt_no_bitrev(thrust::device_vector<T> &f, bool rev = false) {
+void ntt_no_bitrev(thrust::device_vector<T> &f, thrust::device_vector<T> &ws, bool rev = false) {
 	size_t n = f.size();
 	if(n == 1) return;
-	size_t nh = n >> 1;
 
-	size_t i, m, mh, ts;
-	T tmp;
-
-	// rotation table
-	thrust::device_vector<T> ws(nh);
-	tmp = 1;
-	T root;
-	if(rev) root = mmath::NTT::modinv<T, MOD>(mmath::NTT::pow<T, MOD>(primitive_root, mmath::NTT::mul<T, MOD>(MOD - 1, mmath::NTT::modinv<T, MOD>(n))));
-	else root = mmath::NTT::pow<T, MOD>(primitive_root, mmath::NTT::mul<T, MOD>(MOD - 1, mmath::NTT::modinv<T, MOD>(n)));
-	for(i = 0; i < nh; i++) {
-		ws[i] = tmp;
-		tmp = mmath::NTT::mul<T, MOD>(tmp, root);
-	}
+	size_t m, mh, ts;
 
 	// butterfly
 	if(rev) {
 		// intt
+		thrust::transform(ws.begin(), ws.end(), ws.begin(), mmath::NTT::modinv_op<T, MOD>());
 		for(m = 2; m <= n; m <<= 1) {
 			mh = m >> 1;
 			ts = n / m;

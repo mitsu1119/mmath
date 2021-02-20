@@ -334,19 +334,30 @@ void mmath::Digits::mul(const mmath::Digits &x) {
 	constexpr digit_type MOD = 3221225473;	// 3 * 2^30 + 1
 	constexpr digit_type g = 5;
 	size_t s = size() + x.size() - 1;
-	size_t N = 1;
-	while(N < s) N <<= 1;
+	size_t n = 1;
+	while(n < s) n <<= 1;
+	size_t nh = (n >> 1);
 
 	mmath::Digits x_(x);
-	data.resize(N);
-	x_.data.resize(N);
+	data.resize(n);
+	x_.data.resize(n);
 
-	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(data);
-	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(x_.data);
+	// rotation table
+	thrust::device_vector<digit_type> ws(nh);
+	digit_type tmp = 1;
+	digit_type root;
+	root = mmath::NTT::pow<digit_type, MOD>(g, mmath::NTT::mul<digit_type, MOD>(MOD - 1, mmath::NTT::modinv<digit_type, MOD>(n)));
+	for(size_t i = 0; i < nh; i++) {
+		ws[i] = tmp;
+		tmp = mmath::NTT::mul<digit_type, MOD>(tmp, root);
+	}
+
+	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(data, ws);
+	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(x_.data, ws);
 
 	thrust::transform(data.begin(), data.end(), x_.data.begin(), data.begin(), mmath::NTT::mul_op<digit_type, MOD>());
 
-	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(data, true);
+	mmath::NTT::ntt_no_bitrev<digit_type, MOD, g>(data, ws, true);
 
 	normalize();
 	align();
